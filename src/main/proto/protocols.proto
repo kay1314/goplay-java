@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package GoPlay.Core.Protocols;
+
+option java_package = "com.goplay.core.protocols";
+option java_outer_classname = "ProtocolProto";
+
+// Must match TypeScript pkg.pb definitions
+enum PackageType {
+    HankShakeReq = 0;
+    HankShakeResp = 1;
+    Ping = 2;
+    Pong = 3;
+    Notify = 4;
+    Request = 5;
+    Response = 6;
+    Push = 7;
+    Kick = 8;
+}
+
+enum EncodingType {
+    Protobuf = 0;
+    Json = 1;
+}
+
+enum StatusCode {
+    Success = 0;
+    Failed = 1;
+    Error = 2;
+    Timeout = 3;
+}
+
+message Status {
+    int32 Code = 1;
+    string Message = 2;
+}
+
+message Session {
+    string Id = 1;
+}
+
+enum ServerTag {
+    Empty = 0;
+    FrontEnd = 1;
+    BackEnd = 2;
+    All = 3;
+}
+
+message PackageInfo {
+    PackageType Type = 1;
+    int32 Id = 2;
+    EncodingType EncodingType = 3;
+    int32 Route = 4;
+    int32 ContentSize = 5;
+    int32 ChunkCount = 6;
+    int32 ChunkIndex = 7;
+}
+
+message Header {
+    Status Status = 1;
+    Session Session = 2;
+    PackageInfo PackageInfo = 3;
+}
+
+message ReqHankShake {
+    string ClientVersion = 1;
+    ServerTag ServerTag = 2;
+    string AppKey = 3;
+}
+
+message RespHandShake {
+    string ServerVersion = 1;
+    int32 HeartBeatInterval = 2;
+    map<string, int32> Routes = 3;
+}
