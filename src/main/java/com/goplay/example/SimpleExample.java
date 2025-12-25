@@ -2,6 +2,7 @@ package com.goplay.example;
 
 import com.goplay.GoPlay;
 import com.goplay.core.GoPlayLogger;
+import com.goplay.core.protocols.ProtocolProto;
 import com.goplay.example.dto.SCTimeInfo;
 import java.util.concurrent.CompletableFuture;
 
@@ -42,7 +43,7 @@ public class SimpleExample {
                 // You can handle the response asynchronously
                 requestFuture.thenAccept(result -> {
                     if (result != null) {
-                        System.out.println("Response status: " + result.status);
+                        System.out.println("Response status: IsSucceed" + (result.status.getCode() == ProtocolProto.StatusCode.Success_VALUE));
                         System.out.println("Response data: " + result.data);
                     }
                 }).exceptionally(ex -> {

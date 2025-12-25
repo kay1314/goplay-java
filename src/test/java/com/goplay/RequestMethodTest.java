@@ -70,7 +70,7 @@ public class RequestMethodTest {
         // Test ResponseResult creation
         GoPlay.ResponseResult<String> result = new GoPlay.ResponseResult<>(200, "success");
         
-        assertEquals("Status should be 200", 200, result.status);
+        assertEquals("Status should be 200", 200, result.status.getCode());
         assertEquals("Data should be 'success'", "success", result.data);
     }
 
@@ -79,7 +79,7 @@ public class RequestMethodTest {
         // Test ResponseResult default constructor
         GoPlay.ResponseResult<Object> result = new GoPlay.ResponseResult<>();
         
-        assertEquals("Status should be 0", 0, result.status);
+        assertEquals("Status should be 0", 0, result.status.getCode());
         assertNull("Data should be null", result.data);
     }
 
@@ -88,7 +88,7 @@ public class RequestMethodTest {
         // Test timeout response (status 1000)
         GoPlay.ResponseResult<Void> timeoutResult = new GoPlay.ResponseResult<>(1000, null);
         
-        assertEquals("Timeout status should be 1000", 1000, timeoutResult.status);
+        assertEquals("Timeout status should be 1000", 1000, timeoutResult.status.getCode());
         assertNull("Timeout data should be null", timeoutResult.data);
     }
 
@@ -97,7 +97,7 @@ public class RequestMethodTest {
         // Test error response (status 500)
         GoPlay.ResponseResult<Void> errorResult = new GoPlay.ResponseResult<>(500, null);
         
-        assertEquals("Error status should be 500", 500, errorResult.status);
+        assertEquals("Error status should be 500", 500, errorResult.status.getCode());
         assertNull("Error data should be null", errorResult.data);
     }
 

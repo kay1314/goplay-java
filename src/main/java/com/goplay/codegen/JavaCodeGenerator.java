@@ -25,8 +25,8 @@ public class JavaCodeGenerator {
         generateRouteConstants();
         generatePushConstants();
         generateRouteMethods();
-        generateClassEnd();
         generateResultInterfaces();
+        generateClassEnd();
 
         return code.toString();
     }
@@ -41,9 +41,9 @@ public class JavaCodeGenerator {
         code.append("import java.util.concurrent.CompletableFuture;\n");
 
         // Add protobuf package imports
-        if (config.getProtobufPackage() != null) {
-            code.append("import ").append(config.getProtobufPackage()).append(".*;\n");
-        }
+//        if (config.getProtobufPackage() != null) {
+//            code.append("import ").append(config.getProtobufPackage()).append(".*;\n");
+//        }
 
         code.append("\n");
     }
@@ -53,7 +53,7 @@ public class JavaCodeGenerator {
         code.append(" * Auto-generated GoPlay client with strongly-typed API methods.\n");
         code.append(" * Wraps GoPlay framework with convenient async methods for each route.\n");
         code.append(" */\n");
-        code.append("public class ").append(config.getClassName()).append(" {\n\n");
+        code.append("public class ").append(config.getClassName()).append(" extends GoPlay").append(" {\n\n");
     }
 
     private void generateRouteConstants() {
@@ -138,10 +138,6 @@ public class JavaCodeGenerator {
         code.append("    }\n\n");
     }
 
-    private void generateClassEnd() {
-        code.append("}\n\n");
-    }
-
     private void generateResultInterfaces() {
         code.append("// Result type definitions\n\n");
 
@@ -150,12 +146,17 @@ public class JavaCodeGenerator {
             String resultType = route.methodName + "Result";
             String dataType = route.hasResponse ? getSimpleClassName(route.responseType) : "Void";
 
-            code.append("class ").append(resultType).append(" {\n");
+            code.append("public static class ").append(resultType).append(" {\n");
             code.append("    public int status;\n");
             code.append("    public ").append(dataType).append(" data;\n");
             code.append("}\n\n");
         }
     }
+
+    private void generateClassEnd() {
+        code.append("}\n\n");
+    }
+
 
     private String getSimpleClassName(String fullClassName) {
         if (fullClassName == null) return "Void";

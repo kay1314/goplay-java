@@ -312,72 +312,62 @@ public class GoPlay {
     /**
      * Make a request and wait for response.
      */
+    // ...existing code...
     public static <T, RT> CompletableFuture<ResponseResult<RT>> request(String route, T data, Class<RT> resultType) {
         CompletableFuture<ResponseResult<RT>> future = new CompletableFuture<>();
 
         try {
-            // Encode route
             int encodedRoute = getRouteEncoded(route);
-
-            // Create request package with PackageType.Request (type = 1)
             Package<?> pack = Package.createFromData(encodedRoute, data, PackageType.Request_VALUE, getEncodingType());
-            
-            // Set the request ID in the header
+
             Object header = pack.getHeader();
             if (header instanceof Header) {
-                Header originalHeader = (Header) header;
-                // Rebuild header with the new ID
-                Header newHeader = Header.newBuilder(originalHeader)
-                        .setPackageInfo(PackageInfo.newBuilder(originalHeader.getPackageInfo())
+                Header h = (Header) header;
+                Header newHeader = Header.newBuilder(h)
+                        .setPackageInfo(PackageInfo.newBuilder(h.getPackageInfo())
                                 .setId(idGen.next())
                                 .build())
                         .build();
                 pack.setHeader(newHeader);
             }
-            
+
             String key = getCallbackKey(pack.getHeader());
             requestMap.put(key, resultType);
 
-            // Set timeout - emit timeout status if response doesn't arrive in time
             ScheduledFuture<?> timeoutHandle = scheduler.schedule(() -> {
-                if (requestMap.containsKey(key)) {
-                    // Remove the request mapping
-                    requestMap.remove(key);
-                    
-                    // Create a timeout response with status code 1000 (timeout)
-                    ResponseResult<RT> result = new ResponseResult<>(1000, null);
-                    
-                    // Emit the timeout event to trigger the once handler
+                if (requestMap.remove(key) != null) {
+                    // 与 TS 对齐：Timeout + "request time out"
+                    Status timeoutStatus =
+                            /* 若是 proto: */
+                             Status.newBuilder()
+                                 .setCode(StatusCode.Timeout_VALUE) // 或 setCode(StatusCode.Timeout)
+                                 .setMessage("request time out")
+                                 .build();
+
+
+                    ResponseResult<RT> result = new ResponseResult<>(timeoutStatus, null);
                     emit(key, result);
                 }
             }, Consts.TimeOut.REQUEST, TimeUnit.MILLISECONDS);
 
-            // Register response handler - will be called when response arrives or timeout occurs
             once(key, (args) -> {
                 if (args.length > 0 && args[0] instanceof ResponseResult) {
                     @SuppressWarnings("unchecked")
                     ResponseResult<RT> result = (ResponseResult<RT>) args[0];
-                    
-                    // Cancel timeout if response arrived in time
                     timeoutHandle.cancel(false);
-                    
-                    // Remove from request map
                     requestMap.remove(key);
-                    
-                    // Complete the future
                     future.complete(result);
                 }
             });
 
-            // Send the request package
             send(pack);
-            
         } catch (Exception e) {
             future.completeExceptionally(e);
         }
 
         return future;
     }
+// ...existing code...
 
     /**
      * Send a notify message (no response expected).
@@ -728,17 +718,37 @@ public class GoPlay {
     }
 
     // Response result wrapper
+    // ...existing code...
     public static class ResponseResult<T> {
-        public int status;
+        public Status status;   // 由原来的 int 改为对象
         public T data;
 
         public ResponseResult() {
-            this(0, null);
+            this(Status.newBuilder().setCode(0).setMessage("").build(), null);
         }
 
-        public ResponseResult(int status, T data) {
+        // 兼容旧代码：仅有 int code 的场景
+        public ResponseResult(int code, T data) {
+            this(statusOf(code, ""), data);
+        }
+
+        public ResponseResult(Status status, T data) {
             this.status = status;
             this.data = data;
+        }
+
+        public int getCode() {
+            return status == null ? 0 : /* 按你的 Status 实现取 code */ status.getCode();
+        }
+
+        public String getMessage() {
+            return status == null ? "" : /* 按你的 Status 实现取 message */ status.getMessage();
+        }
+
+        // 统一构造 Status（按你的 Status 类实现改造这里）
+        private static Status statusOf(int code, String message) {
+
+             return Status.newBuilder().setCode(code).setMessage(message).build();
         }
     }
 }
